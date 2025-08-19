@@ -97,16 +97,19 @@ static id<SDImageLoader> _defaultImageLoader;
 }
 
 - (nullable NSString *)cacheKeyForURL:(nullable NSURL *)url {
+    // 参数合法性校验
     if (!url) {
         return @"";
     }
     
     NSString *key;
-    // Cache Key Filter
+    
     id<SDWebImageCacheKeyFilter> cacheKeyFilter = self.cacheKeyFilter;
     if (cacheKeyFilter) {
+        // 如果当前的管理类有缓存键过滤器，则调用过滤器的方法生成缓存键
         key = [cacheKeyFilter cacheKeyForURL:url];
     } else {
+        // 管理类没有过滤器，则直接用`NSURL`的字符串作为缓存键
         key = url.absoluteString;
     }
     
@@ -114,19 +117,25 @@ static id<SDImageLoader> _defaultImageLoader;
 }
 
 - (nullable NSString *)originalCacheKeyForURL:(nullable NSURL *)url context:(nullable SDWebImageContext *)context {
+    // 参数合法性校验
     if (!url) {
         return @"";
     }
     
     NSString *key;
-    // Cache Key Filter
+
+    // 先获取自身的缓存键过滤器
     id<SDWebImageCacheKeyFilter> cacheKeyFilter = self.cacheKeyFilter;
+    
     if (context[SDWebImageContextCacheKeyFilter]) {
+        // 如果上下文选项参数中带有缓存键过滤器，使用上下文参数的
         cacheKeyFilter = context[SDWebImageContextCacheKeyFilter];
     }
     if (cacheKeyFilter) {
+        // 如果当前的管理类有缓存键过滤器，则调用过滤器的方法生成缓存键
         key = [cacheKeyFilter cacheKeyForURL:url];
     } else {
+        // 管理类没有过滤器，则直接用`NSURL`的字符串作为缓存键
         key = url.absoluteString;
     }
     

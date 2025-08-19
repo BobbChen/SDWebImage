@@ -41,62 +41,65 @@
  */
 
 /**
- * Integrates SDWebImage async downloading and caching of remote images with UIImageView.
+ * 将SDWebImage远端图像的异步下载和缓存功能整合到UIImageView
  */
 @interface UIImageView (WebCache)
 
 #pragma mark - Image State
 
 /**
- * Get the current image URL.
+ * 获取当前的图片的URL
  */
 @property (nonatomic, strong, readonly, nullable) NSURL *sd_currentImageURL;
 
-#pragma mark - Image Loading
+#pragma mark - 图片加载（9个方法）
 
 /**
- * Set the imageView `image` with an `url`.
+ * 通过`url`设置图片
  *
- * The download is asynchronous and cached.
+ * 异步下载并且会缓存下载的图片
  *
- * @param url The url for the image.
+ * @param url 远端图片的url地址
+ * @discussion  NS_REFINED_FOR_SWIFT 宏的作用是Swift 中隐藏 该Objective-C类型的 API
  */
 - (void)sd_setImageWithURL:(nullable NSURL *)url NS_REFINED_FOR_SWIFT;
 
 /**
- * Set the imageView `image` with an `url` and a placeholder.
+ * 通过`url`设置图片和占位图
  *
- * The download is asynchronous and cached.
+ * 异步下载并且会缓存下载的图片
  *
- * @param url         The url for the image.
- * @param placeholder The image to be set initially, until the image request finishes.
+ * @param url         远端图片的url地址
+ * @param placeholder 最初显示的图片, 直到远端图片被请求回来
  * @see sd_setImageWithURL:placeholderImage:options:
  */
 - (void)sd_setImageWithURL:(nullable NSURL *)url
           placeholderImage:(nullable UIImage *)placeholder NS_REFINED_FOR_SWIFT;
 
 /**
- * Set the imageView `image` with an `url`, placeholder and custom options.
+ * 通过`url`设置图片和占位图以及自定义选项
  *
- * The download is asynchronous and cached.
+ * 异步下载并且会缓存下载的图片
  *
- * @param url         The url for the image.
- * @param placeholder The image to be set initially, until the image request finishes.
- * @param options     The options to use when downloading the image. @see SDWebImageOptions for the possible values.
+ * @param url         远端图片的url地址
+ * @param placeholder 最初显示的图片, 直到远端图片被请求回来
+ * @param options     这些选项会在下载图片的过程中被使用.
+ * @see `SDWebImageOptions` 包含了可用的选项
  */
 - (void)sd_setImageWithURL:(nullable NSURL *)url
           placeholderImage:(nullable UIImage *)placeholder
                    options:(SDWebImageOptions)options NS_REFINED_FOR_SWIFT;
 
 /**
- * Set the imageView `image` with an `url`, placeholder, custom options and context.
+ * 通过`url`设置图片和占位图以及自定义选项及上下文
  *
- * The download is asynchronous and cached.
+ * 异步下载并且会缓存下载的图片
  *
- * @param url         The url for the image.
- * @param placeholder The image to be set initially, until the image request finishes.
- * @param options     The options to use when downloading the image. @see SDWebImageOptions for the possible values.
- * @param context     A context contains different options to perform specify changes or processes, see `SDWebImageContextOption`. This hold the extra objects which `options` enum can not hold.
+ * @param url         远端图片的url地址
+ * @param placeholder 最初显示的图片, 直到远端图片被请求回来
+ * @param options     这些选项会在下载图片的过程中被使用.
+ * @see `SDWebImageOptions` 包含了可用的选项
+ * @param context     包含了不同操作选项的上下文, `SDWebImageContextOption`包含了`SDWebImageOptions`无法支持的额外操作.
  */
 - (void)sd_setImageWithURL:(nullable NSURL *)url
           placeholderImage:(nullable UIImage *)placeholder
@@ -104,50 +107,51 @@
                    context:(nullable SDWebImageContext *)context;
 
 /**
- * Set the imageView `image` with an `url`.
+ * 通过`url`设置图片
  *
- * The download is asynchronous and cached.
+ * 异步下载并且会缓存下载的图片
  *
- * @param url            The url for the image.
- * @param completedBlock A block called when operation has been completed. This block has no return value
- *                       and takes the requested UIImage as first parameter. In case of error the image parameter
- *                       is nil and the second parameter may contain an NSError. The third parameter is a Boolean
- *                       indicating if the image was retrieved from the local cache or from the network.
- *                       The fourth parameter is the original image url.
+ * @param url            远端图片的url地址
+ * @param completedBlock 当图片加载完成会调用这个block，这是一个无返回值有四个参数的block
+ *                          第一个参数：通过url下载的图片
+ *                          第二个参数：下载出错的error
+ *                          第三个参数：标识图片的来源（网络下载还是缓存数据）
+ *                          第四个参数：下载图片的url地址
  */
 - (void)sd_setImageWithURL:(nullable NSURL *)url
                  completed:(nullable SDExternalCompletionBlock)completedBlock;
 
 /**
- * Set the imageView `image` with an `url`, placeholder.
+ * 通过`url`设置图片和占位图
  *
- * The download is asynchronous and cached.
+ * 异步下载并且会缓存下载的图片
  *
- * @param url            The url for the image.
- * @param placeholder    The image to be set initially, until the image request finishes.
- * @param completedBlock A block called when operation has been completed. This block has no return value
- *                       and takes the requested UIImage as first parameter. In case of error the image parameter
- *                       is nil and the second parameter may contain an NSError. The third parameter is a Boolean
- *                       indicating if the image was retrieved from the local cache or from the network.
- *                       The fourth parameter is the original image url.
+ * @param url            远端图片的url地址
+ * @param placeholder    最初显示的图片, 直到远端图片被请求回来
+ * @param completedBlock 当图片加载完成会调用这个block，这是一个无返回值有四个参数的block
+ *                          第一个参数：通过url下载的图片
+ *                          第二个参数：下载出错的error
+ *                          第三个参数：标识图片的来源（网络下载还是缓存数据）
+ *                          第四个参数：下载图片的url地址
  */
 - (void)sd_setImageWithURL:(nullable NSURL *)url
           placeholderImage:(nullable UIImage *)placeholder
                  completed:(nullable SDExternalCompletionBlock)completedBlock NS_REFINED_FOR_SWIFT;
 
 /**
- * Set the imageView `image` with an `url`, placeholder and custom options.
+ * 通过`url`设置图片和占位图以及自定义选项
  *
- * The download is asynchronous and cached.
+ * 异步下载并且会缓存下载的图片
  *
- * @param url            The url for the image.
- * @param placeholder    The image to be set initially, until the image request finishes.
- * @param options        The options to use when downloading the image. @see SDWebImageOptions for the possible values.
- * @param completedBlock A block called when operation has been completed. This block has no return value
- *                       and takes the requested UIImage as first parameter. In case of error the image parameter
- *                       is nil and the second parameter may contain an NSError. The third parameter is a Boolean
- *                       indicating if the image was retrieved from the local cache or from the network.
- *                       The fourth parameter is the original image url.
+ * @param url            远端图片的url地址
+ * @param placeholder    最初显示的图片, 直到远端图片被请求回来
+ * @param options        这些选项会在下载图片的过程中被使用.
+ * @see `SDWebImageOptions` 包含了可用的选项
+ * @param completedBlock 当图片加载完成会调用这个block，这是一个无返回值有四个参数的block
+ *                          第一个参数：通过url下载的图片
+ *                          第二个参数：下载出错的error
+ *                          第三个参数：标识图片的来源（网络下载还是缓存数据）
+ *                          第四个参数：下载图片的url地址
  */
 - (void)sd_setImageWithURL:(nullable NSURL *)url
           placeholderImage:(nullable UIImage *)placeholder
@@ -155,20 +159,21 @@
                  completed:(nullable SDExternalCompletionBlock)completedBlock;
 
 /**
- * Set the imageView `image` with an `url`, placeholder and custom options.
+ * 通过`url`设置图片和占位图以及自定义选项
  *
- * The download is asynchronous and cached.
+ * 异步下载并且会缓存下载的图片
  *
- * @param url            The url for the image.
- * @param placeholder    The image to be set initially, until the image request finishes.
- * @param options        The options to use when downloading the image. @see SDWebImageOptions for the possible values.
- * @param progressBlock  A block called while image is downloading
- *                       @note the progress block is executed on a background queue
- * @param completedBlock A block called when operation has been completed. This block has no return value
- *                       and takes the requested UIImage as first parameter. In case of error the image parameter
- *                       is nil and the second parameter may contain an NSError. The third parameter is a Boolean
- *                       indicating if the image was retrieved from the local cache or from the network.
- *                       The fourth parameter is the original image url.
+ * @param url            远端图片的url地址
+ * @param placeholder    最初显示的图片, 直到远端图片被请求回来
+ * @param options        这些选项会在下载图片的过程中被使用.
+ * @see `SDWebImageOptions` 包含了可用的选项
+ * @param progressBlock  图片下载过程中会调用这个block
+ *                       @note 这个block执行在后台队列
+ * @param completedBlock 当图片加载完成会调用这个block，这是一个无返回值有四个参数的block
+ *                          第一个参数：通过url下载的图片
+ *                          第二个参数：下载出错的error
+ *                          第三个参数：标识图片的来源（网络下载还是缓存数据）
+ *                          第四个参数：下载图片的url地址
  */
 - (void)sd_setImageWithURL:(nullable NSURL *)url
           placeholderImage:(nullable UIImage *)placeholder
@@ -177,21 +182,22 @@
                  completed:(nullable SDExternalCompletionBlock)completedBlock;
 
 /**
- * Set the imageView `image` with an `url`, placeholder, custom options and context.
+ * 通过`url`设置图片和占位图以及自定义选项及上下文
  *
- * The download is asynchronous and cached.
+ * 异步下载并且会缓存下载的图片
  *
- * @param url            The url for the image.
- * @param placeholder    The image to be set initially, until the image request finishes.
- * @param options        The options to use when downloading the image. @see SDWebImageOptions for the possible values.
- * @param context        A context contains different options to perform specify changes or processes, see `SDWebImageContextOption`. This hold the extra objects which `options` enum can not hold.
- * @param progressBlock  A block called while image is downloading
- *                       @note the progress block is executed on a background queue
- * @param completedBlock A block called when operation has been completed. This block has no return value
- *                       and takes the requested UIImage as first parameter. In case of error the image parameter
- *                       is nil and the second parameter may contain an NSError. The third parameter is a Boolean
- *                       indicating if the image was retrieved from the local cache or from the network.
- *                       The fourth parameter is the original image url.
+ * @param url            远端图片的url地址
+ * @param placeholder    最初显示的图片, 直到远端图片被请求回来
+ * @param options        这些选项会在下载图片的过程中被使用.
+ * @see `SDWebImageOptions` 包含了可用的选项
+ * @param context        包含了不同操作选项的上下文, `SDWebImageContextOption`包含了`SDWebImageOptions`无法支持的额外操作.
+ * @param progressBlock  图片下载过程中会调用这个block
+ *                       @note 这个block执行在后台队列
+ * @param completedBlock 当图片加载完成会调用这个block，这是一个无返回值有四个参数的block
+ *                          第一个参数：通过url下载的图片
+ *                          第二个参数：下载出错的error
+ *                          第三个参数：标识图片的来源（网络下载还是缓存数据）
+ *                          第四个参数：下载图片的url地址
  */
 - (void)sd_setImageWithURL:(nullable NSURL *)url
           placeholderImage:(nullable UIImage *)placeholder

@@ -19,10 +19,12 @@ const int64_t SDWebImageProgressUnitCountUnknown = 1LL;
 
 @implementation UIView (WebCache)
 
+// `sd_latestOperationKey`属性的getter方法，用关联属性的方式获取UIView的属性
 - (nullable NSString *)sd_latestOperationKey {
     return objc_getAssociatedObject(self, @selector(sd_latestOperationKey));
 }
 
+// `sd_latestOperationKey`属性的setter方法，用关联属性的方式获取UIView的属性
 - (void)setSd_latestOperationKey:(NSString * _Nullable)sd_latestOperationKey {
     objc_setAssociatedObject(self, @selector(sd_latestOperationKey), sd_latestOperationKey, OBJC_ASSOCIATION_COPY_NONATOMIC);
 }
@@ -30,13 +32,16 @@ const int64_t SDWebImageProgressUnitCountUnknown = 1LL;
 #pragma mark - State
 
 - (NSURL *)sd_imageURL {
+    // 使用`sd_latestOperationKey`属性获取当前视图的图片url
     return [self sd_imageLoadStateForKey:self.sd_latestOperationKey].url;
 }
 
+// 获取图片加载的进度属性
 - (NSProgress *)sd_imageProgress {
     SDWebImageLoadState *loadState = [self sd_imageLoadStateForKey:self.sd_latestOperationKey];
     NSProgress *progress = loadState.progress;
     if (!progress) {
+        // 如果没有获取到，则构建一个
         progress = [[NSProgress alloc] initWithParent:nil userInfo:nil];
         self.sd_imageProgress = progress;
     }
@@ -44,17 +49,22 @@ const int64_t SDWebImageProgressUnitCountUnknown = 1LL;
 }
 
 - (void)setSd_imageProgress:(NSProgress *)sd_imageProgress {
+    // 有效性校验
     if (!sd_imageProgress) {
         return;
     }
+    // 通过操作键获取
     SDWebImageLoadState *loadState = [self sd_imageLoadStateForKey:self.sd_latestOperationKey];
     if (!loadState) {
+        // 没有获取到初始话一个新的
         loadState = [SDWebImageLoadState new];
     }
     loadState.progress = sd_imageProgress;
+    // 用操作键给当前视图设置加载状态属性
     [self sd_setImageLoadState:loadState forKey:self.sd_latestOperationKey];
 }
 
+// 通过图片链接给视图设置图片的方法
 - (nullable id<SDWebImageOperation>)sd_internalSetImageWithURL:(nullable NSURL *)url
                                               placeholderImage:(nullable UIImage *)placeholder
                                                        options:(SDWebImageOptions)options
@@ -63,74 +73,96 @@ const int64_t SDWebImageProgressUnitCountUnknown = 1LL;
                                                       progress:(nullable SDImageLoaderProgressBlock)progressBlock
                                                      completed:(nullable SDInternalCompletionBlock)completedBlock {
     
-    // Very common mistake is to send the URL using NSString object instead of NSURL. For some strange reason, Xcode won't
-    // throw any warning for this type mismatch. Here we failsafe this error by allowing URLs to be passed as NSString.
-    //  if url is NSString and shouldUseWeakMemoryCache is true, [cacheKeyForURL:context] will crash. just for a  global protect.
+    //  最常见的错误是url参数传递字符串而不是NSURL，这个问题xcode并不会抛出异常，所以这里我们允许url参数传入字符串类型
+    //  如果url是字符串类型并且`shouldUseWeakMemoryCache`为true，那么调用`[cacheKeyForURL:context]`方法将会崩溃，所以这里进行专门的处理
     if ([url isKindOfClass:NSString.class]) {
         url = [NSURL URLWithString:(NSString *)url];
     }
-    // Prevents app crashing on argument type error like sending NSNull instead of NSURL
+    // 如果url不是`NSURL`类型，则置为空，保证不会崩溃
     if (![url isKindOfClass:NSURL.class]) {
         url = nil;
     }
-    
+
+    // 如果有上下文参数，进行一次copy，context本质是字典类型
     if (context) {
-        // copy to avoid mutable object
+        // 进行一次copy避免context是可变类型
         context = [context copy];
     } else {
+        // 外部没有传入，内部初始化一个空的上下文字典
         context = [NSDictionary dictionary];
     }
+    
     NSString *validOperationKey = context[SDWebImageContextSetImageOperationKey];
     if (!validOperationKey) {
-        // pass through the operation key to downstream, which can used for tracing operation or image view class
+        // 把操作键传递给之后的流程，操作键可以跟踪对应的视图类
+        // 根据当前视图类的类型生成字符串操作键
         validOperationKey = NSStringFromClass([self class]);
         SDWebImageMutableContext *mutableContext = [context mutableCopy];
+        // 将操作键存入上下文字典中
         mutableContext[SDWebImageContextSetImageOperationKey] = validOperationKey;
         context = [mutableContext copy];
     }
+    // 当前视图的操作键进行赋值
     self.sd_latestOperationKey = validOperationKey;
+    
+    // 外部调用该方法是否设置了避免自动取消上一个下载操作（当调用该方法后默认是取消上一个图片加载操作）
     if (!(SD_OPTIONS_CONTAINS(options, SDWebImageAvoidAutoCancelImage))) {
-        // cancel previous loading for the same set-image operation key by default
+        // 如果外部没有设置，那么按照默认流程，先取消该视图的上一次图片加载操作
         [self sd_cancelImageLoadOperationWithKey:validOperationKey];
     }
+    // 通过操作键获取加载状态
     SDWebImageLoadState *loadState = [self sd_imageLoadStateForKey:validOperationKey];
     if (!loadState) {
+        // 没有初始化一个
         loadState = [SDWebImageLoadState new];
     }
     loadState.url = url;
+    // 给当前视图设置加载状态属性
     [self sd_setImageLoadState:loadState forKey:validOperationKey];
     
+    // 获取图片管理类
     SDWebImageManager *manager = context[SDWebImageContextCustomManager];
     if (!manager) {
+        // 没有则初始化一个
         manager = [SDWebImageManager sharedManager];
     } else {
-        // remove this manager to avoid retain cycle (manger -> loader -> operation -> context -> manager)
+        // 如果有则移除掉，循环引用 (manger -> loader -> operation -> context -> manager)
         SDWebImageMutableContext *mutableContext = [context mutableCopy];
         mutableContext[SDWebImageContextCustomManager] = nil;
         context = [mutableContext copy];
     }
+    
+    // 图片加载完成后的回调队列
     SDCallbackQueue *queue = context[SDWebImageContextCallbackQueue];
     BOOL shouldUseWeakCache = NO;
+    
+    // 如果图片管理类内部的缓存管理属性代理是`SDImageCache`的实例
     if ([manager.imageCache isKindOfClass:SDImageCache.class]) {
         shouldUseWeakCache = ((SDImageCache *)manager.imageCache).config.shouldUseWeakMemoryCache;
     }
+    
+    // 如果是占位图立刻展示模式（(options & SDWebImageDelayPlaceholder)为false）
     if (!(options & SDWebImageDelayPlaceholder)) {
         if (shouldUseWeakCache) {
+            // 调用manager的方法生成缓存键
             NSString *key = [manager cacheKeyForURL:url context:context];
-            // call memory cache to trigger weak cache sync logic, ignore the return value and go on normal query
-            // this unfortunately will cause twice memory cache query, but it's fast enough
-            // in the future the weak cache feature may be re-design or removed
+            
+            // 调用内存缓存方法来触发弱缓存的同步逻辑，忽略该方法的返回值
+            // 这将触发两次内存缓存查询，后期再优化
             [((SDImageCache *)manager.imageCache) imageFromMemoryCacheForKey:key];
         }
+        
+        // 如果上下文参数不包含回调队列，则使用主队列去进行后续的图片设置操作
         [(queue ?: SDCallbackQueue.mainQueue) async:^{
             [self sd_setImage:placeholder imageData:nil basedOnClassOrViaCustomSetImageBlock:setImageBlock cacheType:SDImageCacheTypeNone imageURL:url];
         }];
     }
     
+    // 构建可用于取消图片加载的操作对象
     id <SDWebImageOperation> operation = nil;
     
     if (url) {
-        // reset the progress
+        // 重置图片下载进度
         NSProgress *imageProgress = loadState.progress;
         if (imageProgress) {
             imageProgress.totalUnitCount = 0;
@@ -138,32 +170,41 @@ const int64_t SDWebImageProgressUnitCountUnknown = 1LL;
         }
         
 #if SD_UIKIT || SD_MAC
-        // check and start image indicator
+        // iOS/tvOS/visionOS/Mac平台下，检查并开始加载指示器
         [self sd_startImageIndicatorWithQueue:queue];
         id<SDWebImageIndicator> imageIndicator = self.sd_imageIndicator;
 #endif
         
+        // 下载进度block
         SDImageLoaderProgressBlock combinedProgressBlock = ^(NSInteger receivedSize, NSInteger expectedSize, NSURL * _Nullable targetURL) {
+            // 给`SDWebImageLoadState`设置进度值
             if (imageProgress) {
                 imageProgress.totalUnitCount = expectedSize;
                 imageProgress.completedUnitCount = receivedSize;
             }
 #if SD_UIKIT || SD_MAC
+            // / iOS/tvOS/visionOS/Mac平台下更新进度指示器UI
             if ([imageIndicator respondsToSelector:@selector(updateIndicatorProgress:)]) {
                 double progress = 0;
                 if (expectedSize != 0) {
+                    // 计算已下载的百分比
                     progress = (double)receivedSize / expectedSize;
                 }
+                // 确保百分比是0.0 - 1.0范围内
                 progress = MAX(MIN(progress, 1), 0); // 0.0 - 1.0
                 dispatch_async(dispatch_get_main_queue(), ^{
+                    // 主线程刷新UI
                     [imageIndicator updateIndicatorProgress:progress];
                 });
             }
 #endif
+            // 外部调用有进度回调的话，将进度信息回调给最外部的调用者
             if (progressBlock) {
                 progressBlock(receivedSize, expectedSize, targetURL);
             }
         };
+        
+        // 使用`SDWebImageManager`的方法初始化`SDWebImageOperation`实例
         @weakify(self);
         operation = [manager loadImageWithURL:url options:options context:context progress:combinedProgressBlock completed:^(UIImage *image, NSData *data, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
             @strongify(self);
@@ -483,11 +524,17 @@ const int64_t SDWebImageProgressUnitCountUnknown = 1LL;
     [self addSubview:view];
 }
 
+
+/// 开始加载指示器
+/// - Parameter queue: 队列
 - (void)sd_startImageIndicatorWithQueue:(SDCallbackQueue *)queue {
+    
+    // 如果自身没有指示器就跳出
     id<SDWebImageIndicator> imageIndicator = self.sd_imageIndicator;
     if (!imageIndicator) {
         return;
     }
+    // 没有传入队列则在主队列执行指示器动画
     [(queue ?: SDCallbackQueue.mainQueue) async:^{
         [imageIndicator startAnimatingIndicator];
     }];

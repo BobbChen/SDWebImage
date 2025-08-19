@@ -10,21 +10,21 @@
 #import "SDWebImageCompat.h"
 
 /**
- A loading state to manage View Category which contains multiple states. Like UIImgeView.image && UIImageView.highlightedImage
+ 用于管理视图分类的加载状态，比如`UIImgeView.image` 和 `UIImageView.highlightedImage`
 
  * @code
- SDWebImageLoadState *loadState = [self sd_imageLoadStateForKey:@keypath(self, highlitedImage)];
- NSProgress *highlitedImageProgress = loadState.progress;
+    SDWebImageLoadState *loadState = [self sd_imageLoadStateForKey:@keypath(self, highlitedImage)];
+    NSProgress *highlitedImageProgress = loadState.progress;
  * @endcode
  */
 @interface SDWebImageLoadState : NSObject
 
 /**
- Image loading URL
+ 当前状态下对应的下载URL
  */
 @property (nonatomic, strong, nullable) NSURL *url;
 /**
- Image loading progress. The unit count is the received size and excepted size of download.
+ 图片资源下载进度. 包含已下载的大小和图片资源总大小信息
  */
 @property (nonatomic, strong, nullable) NSProgress *progress;
 

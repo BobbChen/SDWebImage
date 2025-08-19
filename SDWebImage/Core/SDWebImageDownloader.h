@@ -72,27 +72,27 @@ typedef NS_OPTIONS(NSUInteger, SDWebImageDownloaderOptions) {
     SDWebImageDownloaderScaleDownLargeImages = 1 << 8,
     
     /**
-     * By default, we will decode the image in the background during cache query and download from the network. This can help to improve performance because when rendering image on the screen, it need to be firstly decoded. But this happen on the main queue by Core Animation.
-     * However, this process may increase the memory usage as well. If you are experiencing a issue due to excessive memory consumption, This flag can prevent decode the image.
-     * @note 5.14.0 introduce `SDImageCoderDecodeUseLazyDecoding`, use that for better control from codec, instead of post-processing. Which acts the similar like this option but works for SDAnimatedImage as well (this one does not)
-     * @deprecated Deprecated in v5.17.0, if you don't want force-decode, pass [.imageForceDecodePolicy] = SDImageForceDecodePolicy.never.rawValue in context option
+     * 默认情况下，当图片获取到后会在后台进行图片解码操作。这是因为在图片渲染到屏幕之前需要先将图片进行解码。后台解码对提高性能有帮助。但是这个解码过程会增加内存。如果因为内存问题导致出错，可以使用此标识禁止图片解码。
+     *
+     * 5.14.0版本新增了`SDImageCoderDecodeUseLazyDecoding`可以进行更好的解码控制。
+     *
+     * 5.17.0版本该标识符被废弃，如果不希望强制解码，可以通过在context上下文参数中设置[.imageForceDecodePolicy] = SDImageForceDecodePolicy.never.rawValue
      */
     SDWebImageDownloaderAvoidDecodeImage API_DEPRECATED("Use SDWebImageContextImageForceDecodePolicy instead", macos(10.10, 10.10), ios(8.0, 8.0), tvos(9.0, 9.0), watchos(2.0, 2.0)) = 1 << 9,
     
     /**
-     * By default, we decode the animated image. This flag can force decode the first frame only and produce the static image.
+     * 默认情况下，动图也会被解码，此标识可以强制解码动图的第一帧图像，并生成静态图
      */
     SDWebImageDownloaderDecodeFirstFrameOnly = 1 << 10,
     
     /**
-     * By default, for `SDAnimatedImage`, we decode the animated image frame during rendering to reduce memory usage. This flag actually trigger `preloadAllAnimatedImageFrames = YES` after image load from network
+     * 默认情况下，`SDAnimatedImage`的动图会在渲染期间进行解码以减少内存使用，此标识会触发`preloadAllAnimatedImageFrames = YES`
      */
     SDWebImageDownloaderPreloadAllFrames = 1 << 11,
     
     /**
-     * By default, when you use `SDWebImageContextAnimatedImageClass` context option (like using `SDAnimatedImageView` which designed to use `SDAnimatedImage`), we may still use `UIImage` when the memory cache hit, or image decoder is not available, to behave as a fallback solution.
-     * Using this option, can ensure we always produce image with your provided class. If failed, a error with code `SDWebImageErrorBadImageData` will been used.
-     * Note this options is not compatible with `SDWebImageDownloaderDecodeFirstFrameOnly`, which always produce a UIImage/NSImage.
+     * 默认情况下，对于使用`SDAnimatedImageView`的场景要求使用`SDAnimatedImage`，如果缓存命中或者图片解码器不可用时，会返回`UIImage`，此标识会强制返回`SDAnimatedImage`类型，如果失败，则会返回`SDWebImageErrorBadImageData`
+     *
      */
     SDWebImageDownloaderMatchAnimatedImageClass = 1 << 12,
 };

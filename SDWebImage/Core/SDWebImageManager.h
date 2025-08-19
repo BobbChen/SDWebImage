@@ -77,62 +77,58 @@ typedef void(^SDInternalCompletionBlock)(UIImage * _Nullable image, NSData * _Nu
 @end
 
 /**
- * The SDWebImageManager is the class behind the UIImageView+WebCache category and likes.
- * It ties the asynchronous downloader (SDWebImageDownloader) with the image cache store (SDImageCache).
- * You can use this class directly to benefit from web image downloading with caching in another context than
- * a UIView.
+ * `SDWebImageManager`是`UIImageView+WebCache`及类似类别背后的核心类
+ * 该类将异步下载器`SDWebImageDownloader`和图片缓存类`SDImageCache`联系到一起
+ * 可以直接使用这个类实现图片下载以及图片缓存而不仅是局限于UIView
  *
- * Here is a simple example of how to use SDWebImageManager:
+ * SDWebImageManager使用示例：
  *
  * @code
-
-SDWebImageManager *manager = [SDWebImageManager sharedManager];
-[manager loadImageWithURL:imageURL
-                  options:0
-                 progress:nil
-                completed:^(UIImage *image, NSData *data, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
-                    if (image) {
-                        // do something with image
-                    }
-                }];
-
+        SDWebImageManager *manager = [SDWebImageManager sharedManager];
+        [manager loadImageWithURL:imageURL
+                          options:0
+                         progress:nil
+                        completed:^(UIImage *image, NSData *data, NSError *error, SDImageCacheType cacheType, BOOL finished, NSURL *imageURL) {
+                            if (image) {
+                                // 此时图片已经获取到了
+                            }
+                        }];
  * @endcode
  */
 @interface SDWebImageManager : NSObject
 
 /**
- * The delegate for manager. Defaults to nil.
+ * 图片管理器的代理，默认为空
  */
 @property (weak, nonatomic, nullable) id <SDWebImageManagerDelegate> delegate;
 
 /**
- * The image cache used by manager to query image cache.
+ * 图片管理器用于查询图片缓存的属性
  */
 @property (strong, nonatomic, readonly, nonnull) id<SDImageCache> imageCache;
 
 /**
- * The image loader used by manager to load image.
+ * 图片管理器用来加载图片的图片加载器
  */
 @property (strong, nonatomic, readonly, nonnull) id<SDImageLoader> imageLoader;
 
 /**
- The image transformer for manager. It's used for image transform after the image load finished and store the transformed image to cache, see `SDImageTransformer`.
- Defaults to nil, which means no transform is applied.
- @note This will affect all the load requests for this manager if you provide. However, you can pass `SDWebImageContextImageTransformer` in context arg to explicitly use that transformer instead.
- */
+   图片管理器的图像变化期，在图片下载完成之后被用来图像变化，并且会将变换后的图片存储到缓存中，详细看`SDImageTransformer`
+   默认是空，也就是说普通场景下不需要对图像进行变换操作
+ @note 如果设置了该属性，那么该管理器下的所有图片下载都会受到影响，可以在context中设置`SDWebImageContextImageTransformer`去指定使用转换器
+  */
 @property (strong, nonatomic, nullable) id<SDImageTransformer> transformer;
 
 /**
- * The cache filter is used to convert an URL into a cache key each time SDWebImageManager need cache key to use image cache.
+ * 每当图片管理器需要用缓存键缓存图片的时候这个缓存过滤器会把图片URL转换为缓存键
  *
- * The following example sets a filter in the application delegate that will remove any query-string from the
- * URL before to use it as a cache key:
+ * 下面的代码是一个自定义缓存过滤器的示例，将url中的query内容去除之后生成缓存键
  *
  * @code
- SDWebImageManager.sharedManager.cacheKeyFilter =[SDWebImageCacheKeyFilter cacheKeyFilterWithBlock:^NSString * _Nullable(NSURL * _Nonnull url) {
-    url = [[NSURL alloc] initWithScheme:url.scheme host:url.host path:url.path];
-    return [url absoluteString];
- }];
+     SDWebImageManager.sharedManager.cacheKeyFilter =[SDWebImageCacheKeyFilter cacheKeyFilterWithBlock:^NSString * _Nullable(NSURL * _Nonnull url) {
+        url = [[NSURL alloc] initWithScheme:url.scheme host:url.host path:url.path];
+        return [url absoluteString];
+     }];
  * @endcode
  */
 @property (nonatomic, strong, nullable) id<SDWebImageCacheKeyFilter> cacheKeyFilter;
@@ -276,14 +272,17 @@ SDWebImageManager *manager = [SDWebImageManager sharedManager];
 - (void)removeAllFailedURLs;
 
 /**
- * Return the cache key for a given URL, does not considerate transformer or thumbnail.
- * @note This method does not have context option, only use the url and manager level cacheKeyFilter to generate the cache key.
+ * 通过传入的图片URL获取缓存键，不考虑图片变换或缩略图的情况
+ *
+ * @note 此方法没有上下文选项，仅通过图片链接和管理器`cacheKeyFilter`来生成缓存键
  */
 - (nullable NSString *)cacheKeyForURL:(nullable NSURL *)url;
 
 /**
- * Return the cache key for a given URL and context option.
- * @note The context option like `.thumbnailPixelSize` and `.imageTransformer` will effect the generated cache key, using this if you have those context associated.
+ * 通过图片URL和上下文选项生成缓存键
+ *
+ * @note 上下文选项中的`.thumbnailPixelSize` and `.imageTransformer`参数会影响生成的缓存键，如果有上下文相关参数可以使用该方法
+ *
 */
 - (nullable NSString *)cacheKeyForURL:(nullable NSURL *)url context:(nullable SDWebImageContext *)context;
 

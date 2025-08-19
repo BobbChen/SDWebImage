@@ -21,8 +21,8 @@ typedef NS_ENUM(NSUInteger, SDCallbackPolicy) {
     SDCallbackPolicySafeAsyncMainThread = 3,
 };
 
-/// SDCallbackQueue is a wrapper used to control how the completionBlock should perform on queues, used by our `Cache`/`Manager`/`Loader`.
-/// Useful when you call SDWebImage in non-main queue and want to avoid it callback into main queue, which may cause issue.
+/// SDCallbackQueue是用于控制图片下载完成之后执行方式的包装器。被SDWebImage内部`Cache`/`Manager`/`Loader`类使用
+/// 当调用SDWebImage在非主线线程并想要避免在主线程回调，这个类会起到作用
 @interface SDCallbackQueue : NSObject
 
 /// The main queue. This is the default value, has the same effect when passing `nil` to `SDWebImageContextCallbackQueue`

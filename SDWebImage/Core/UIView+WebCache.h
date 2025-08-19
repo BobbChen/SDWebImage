@@ -15,72 +15,75 @@
 #import "UIView+WebCacheState.h"
 
 /**
- The value specify that the image progress unit count cannot be determined because the progressBlock is not been called.
+ 用来表示没有指定下载进度回调的单元个数
  */
 FOUNDATION_EXPORT const int64_t SDWebImageProgressUnitCountUnknown; /* 1LL */
 
 typedef void(^SDSetImageBlock)(UIImage * _Nullable image, NSData * _Nullable imageData, SDImageCacheType cacheType, NSURL * _Nullable imageURL);
 
 /**
- Integrates SDWebImage async downloading and caching of remote images with UIView subclass.
+ 将 SDWebImage 对远端图像的异步下载和缓存功能整合到UIView的子类
  */
 @interface UIView (WebCache)
 
 /**
- * Get the current image operation key. Operation key is used to identify the different queries for one view instance (like UIButton).
- * See more about this in `SDWebImageContextSetImageOperationKey`.
+ * 获取当前图片的操作键. 操作键用于识别对于同一个实例对象的不同查询 (比如 UIButton).
+ * 更多的细节可以看 `SDWebImageContextSetImageOperationKey`.
  *
- * @note You can use method `UIView+WebCacheOperation` to investigate different queries' operation.
- * @note For the history version compatible, when current UIView has property exactly called `image`, the operation key will use `NSStringFromClass(self.class)`. Include `UIImageView.image/NSImageView.image/NSButton.image` (without `UIButton`)
- * @warning This property should be only used for single state view, like `UIImageView` without highlighted state. For stateful view like `UIBUtton` (one view can have multiple images loading), check their header to call correct API, like `-[UIButton sd_imageOperationKeyForState:]`
+ * @note 可以使用`UIView+WebCacheOperation`中的方法去执行不同的查询方法
+ * @note 为了能够和历史版本兼容，如果当前的`UIView`恰好有个属性命名为`image`，则这个操作键会使用`NSStringFromClass(self.class)`
+ *
+ * @warning 这个属性仅用于单状态视图,比如`UIImageView`
  */
 @property (nonatomic, strong, readonly, nullable) NSString *sd_latestOperationKey;
 
 #pragma mark - State
 
 /**
- * Get the current image URL.
- * This simply translate to `[self sd_imageLoadStateForKey:self.sd_latestOperationKey].url` from v5.18.0
+ * 获取当前视图图片的链接url
+ * 从v5.18.0版本开始这个属性只是`[self sd_imageLoadStateForKey:self.sd_latestOperationKey].url`的转换
  *
- * @note Note that because of the limitations of categories this property can get out of sync if you use setImage: directly.
- * @warning This property should be only used for single state view, like `UIImageView` without highlighted state. For stateful view like `UIBUtton` (one view can have multiple images loading), use `sd_imageLoadStateForKey:` instead. See `UIView+WebCacheState.h` for more information.
+ * @note 因为分类的原因，如果直接调用`setImage:`方法这个属性可能不会同步
+ * @warning 这个属性只适用于没有高亮状态的单状态视图比如`UIImageView`, 对于多状态视图比如`UIButton`使用`sd_imageLoadStateForKey:`方法获取对应信息
  */
 @property (nonatomic, strong, readonly, nullable) NSURL *sd_imageURL;
 
 /**
- * The current image loading progress associated to the view. The unit count is the received size and excepted size of download.
- * The `totalUnitCount` and `completedUnitCount` will be reset to 0 after a new image loading start (change from current queue). And they will be set to `SDWebImageProgressUnitCountUnknown` if the progressBlock not been called but the image loading success to mark the progress finished (change from main queue).
- * @note You can use Key-Value Observing on the progress, but you should take care that the change to progress is from a background queue during download(the same as progressBlock). If you want to using KVO and update the UI, make sure to dispatch on the main queue. And it's recommend to use some KVO libs like KVOController because it's more safe and easy to use.
- * @note The getter will create a progress instance if the value is nil. But by default, we don't create one. If you need to use Key-Value Observing, you must trigger the getter or set a custom progress instance before the loading start. The default value is nil.
- * @note Note that because of the limitations of categories this property can get out of sync if you update the progress directly.
- * @warning This property should be only used for single state view, like `UIImageView` without highlighted state. For stateful view like `UIBUtton` (one view can have multiple images loading), use `sd_imageLoadStateForKey:` instead. See `UIView+WebCacheState.h` for more information.
+ * 视图关联的图片的下载进度，单位是已下载大小和图片的总大小，当新的图片开始下载的时候`totalUnitCount` 和 `completedUnitCount`会被重置为0。如果没有调用下载进度block那么图片下载完成后`totalUnitCount` 和 `completedUnitCount`会被设置为`SDWebImageProgressUnitCountUnknown`用来表示下载完成。
+ * @note 可以使用KVO监听下载进度，但是需要注意下载进度的改变是在后台队列。如果想要通过KVO监听进度然后更新UI一定要保证是在主队列。更推荐使用`KVOController`这样会更安全
+ *
+ * @note 如果该属性为空则在进行获取的时候会创建实例，如果想要使用KVO监听，需要保证触发过该属性的Getter方法或者设置了一个自定义的progress实例对象。因为该值默认为空。
+ *
+ * @note 因为分类的限制如果直接更新此进度可能会不同步
+ *
+ * @warning 这个属性只适用于没有高亮状态的单状态视图比如`UIImageView`, 对于多状态视图比如`UIButton`使用`sd_imageLoadStateForKey:`方法获取对应信息
+ *
+ * @note `null_resettable` 标识该属性可以setter被置空，但是getter不能为空
  */
 @property (nonatomic, strong, null_resettable) NSProgress *sd_imageProgress;
 
 /**
- * Set the imageView `image` with an `url` and optionally a placeholder image.
+ * 通过`url`设置图片以及可选的占位图图片
  *
- * The download is asynchronous and cached.
+ * 异步下载并带有缓存
  *
- * @param url            The url for the image.
- * @param placeholder    The image to be set initially, until the image request finishes.
- * @param options        The options to use when downloading the image. @see SDWebImageOptions for the possible values.
- * @param context        A context contains different options to perform specify changes or processes, see `SDWebImageContextOption`. This hold the extra objects which `options` enum can not hold.
- * @param setImageBlock  Block used for custom set image code. If not provide, use the built-in set image code (supports `UIImageView/NSImageView` and `UIButton/NSButton` currently)
- * @param progressBlock  A block called while image is downloading
- *                       @note the progress block is executed on a background queue
- * @param completedBlock A block called when operation has been completed.
- *   This block has no return value and takes the requested UIImage as first parameter and the NSData representation as second parameter.
- *   In case of error the image parameter is nil and the third parameter may contain an NSError.
+ * @param url            远端图片的url
+ * @param placeholder    占位图会立即被设置直到远端图片被下载下来
+ * @param options        这些选项在图片下载过程中会被用到. @see SDWebImageOptions 可用的选项
+ * @param context        可以执行特殊操作的上下文选项, see `SDWebImageContextOption`上下文参数支持`SDWebImageOptions`不支持的额外操作
+ * @param setImageBlock  用于自定义设置图片代码的block，如果没传则使用内置的设置图片代码
+ * @param progressBlock  图片下载过程中会调用这个block
+ *                       @note 这个block执行在后台队列
  *
- *   The forth parameter is an `SDImageCacheType` enum indicating if the image was retrieved from the local cache
- *   or from the memory cache or from the network.
+ * @param completedBlock 当图片加载完成会调用这个block，这是一个无返回值有四个参数的block
+ *                          第一个参数：通过url下载的图片
+ *                          第二个参数：NSData形式的图片
+ *                          第三个参数：下载出错的error
+ *                          第四个参数：标识图片的来源（网络下载还是缓存数据）
+ *                          第五个参数：标识是否下载完成的布尔值参数，通常是YES。但如果下载传入的option是`SDWebImageProgressiveLoad`渐进式下载，那么此block会频繁回调部分图片数据。当图片完整下载后这个block会最后回调一次带有完整图片的数据，此时为YES
+ *                          第六个参数：图片的url
  *
- *   The fifth parameter normally is always YES. However, if you provide SDWebImageAvoidAutoSetImage with SDWebImageProgressiveLoad options to enable progressive downloading and set the image yourself. This block is thus called repeatedly with a partial image. When image is fully downloaded, the
- *   block is called a last time with the full image and the last parameter set to YES.
- *
- *   The last parameter is the original image URL
- *  @return The returned operation for cancelling cache and download operation, typically type is `SDWebImageCombinedOperation`
+ *  @return 该方法的返回值可以取消缓存和下载操作，通常情况下该类型为`SDWebImageCombinedOperation`
  */
 - (nullable id<SDWebImageOperation>)sd_internalSetImageWithURL:(nullable NSURL *)url
                                               placeholderImage:(nullable UIImage *)placeholder
@@ -91,38 +94,39 @@ typedef void(^SDSetImageBlock)(UIImage * _Nullable image, NSData * _Nullable ima
                                                      completed:(nullable SDInternalCompletionBlock)completedBlock;
 
 /**
- * Cancel the latest image load, using the `sd_latestOperationKey` as operation key
- * This simply translate to `[self sd_cancelImageLoadOperationWithKey:self.sd_latestOperationKey]`
+ * 使用`sd_latestOperationKey`作为操作键，取消最新的图片加载操作
+ * 这是`[self sd_cancelImageLoadOperationWithKey:self.sd_latestOperationKey]`方法的简单调用
  */
 - (void)sd_cancelLatestImageLoad;
 
 /**
- * Cancel the current image load, for single state view.
- * This actually does not cancel current loading, because stateful view can load multiple images at the same time (like UIButton, each state can load different images). Just behave the same as `sd_cancelLatestImageLoad`
+ * 用于取消单状态视图的当前图片加载操作
  *
- * @warning This method should be only used for single state view, like `UIImageView` without highlighted state. For stateful view like `UIBUtton` (one view can have multiple images loading), use `sd_cancelImageLoadOperationWithKey:` instead. See `UIView+WebCacheOperation.h` for more information.
- * @deprecated Use `sd_cancelLatestImageLoad` instead. Which don't cause overload method misunderstanding (`UIImageView+WebCache` provide the same API as this one, but does not do the same thing). This API will be totally removed in v6.0 due to this.
+ * @warning 这个方法通常被用于像`UIImageView`这样的单状态视图. 对于`UIBtton`这样的多状态视图可以使用sd_cancelImageLoadOperationWithKey:`方法
+ *
+ * @deprecated 该方法会在V6.0版本移除，请使用`sd_cancelLatestImageLoad`
  */
 - (void)sd_cancelCurrentImageLoad API_DEPRECATED_WITH_REPLACEMENT("sd_cancelLatestImageLoad", macos(10.10, 10.10), ios(8.0, 8.0), tvos(9.0, 9.0), watchos(2.0, 2.0));
 
 #if SD_UIKIT || SD_MAC
 
-#pragma mark - Image Transition
+#pragma mark - 图片过渡效果
 
 /**
- The image transition when image load finished. See `SDWebImageTransition`.
- If you specify nil, do not do transition. Defaults to nil.
- @warning This property should be only used for single state view, like `UIImageView` without highlighted state. For stateful view like `UIBUtton` (one view can have multiple images loading), write your own implementation in `setImageBlock:`, and check current stateful view's state to render the UI.
+ 图片加载完成进行显示的过渡效果，如果不指定则为空
+ @warning 这个属性只适用于没有高亮状态的单状态视图比如`UIImageView`, 对于多状态视图比如`UIButton`使用`setImageBlock:`去添加自定义实现
  */
 @property (nonatomic, strong, nullable) SDWebImageTransition *sd_imageTransition;
 
-#pragma mark - Image Indicator
+#pragma mark - 图片指示器
 
 /**
- The image indicator during the image loading. If you do not need indicator, specify nil. Defaults to nil
- The setter will remove the old indicator view and add new indicator view to current view's subview.
- @note Because this is UI related, you should access only from the main queue.
- @warning This property should be only used for single state view, like `UIImageView` without highlighted state. For stateful view like `UIBUtton` (one view can have multiple images loading), write your own implementation in `setImageBlock:`, and check current stateful view's state to render the UI.
+ 图片指示器用于图片加载过程中. 如果不需要则设置为空. 默认是空
+ 如果设置该属性将会移除旧的指示器并且添加新的指示器到当前视图的子视图中
+ 
+ @note 因为是UI关联的属性，所以访问需要再主队列
+ @warning  这个属性只适用于没有高亮状态的单状态视图比如`UIImageView`, 对于多状态视图比如`UIButton`使用`setImageBlock:`方法去添加自定义实现
+ 
  */
 @property (nonatomic, strong, nullable) id<SDWebImageIndicator> sd_imageIndicator;
 

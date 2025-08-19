@@ -55,10 +55,10 @@ typedef NS_ENUM(NSUInteger, SDImageCacheConfigExpireType) {
 @property (assign, nonatomic) BOOL shouldCacheImagesInMemory;
 
 /*
- * The option to control weak memory cache for images. When enable, `SDImageCache`'s memory cache will use a weak maptable to store the image at the same time when it stored to memory, and get removed at the same time.
- * However when memory warning is triggered, since the weak maptable does not hold a strong reference to image instance, even when the memory cache itself is purged, some images which are held strongly by UIImageViews or other live instances can be recovered again, to avoid later re-query from disk cache or network. This may be helpful for the case, for example, when app enter background and memory is purged, cause cell flashing after re-enter foreground.
- * When enabling this option, we will sync back the image from weak maptable to strong cache during next time top level `sd_setImage` function call.
- * Defaults to NO (YES before 5.12.0 version). You can change this option dynamically.
+ * 控制图片弱内存缓存的选项. 当开启设置为YES，当图片被存储到内存时也会用一个弱映射表存储这张图片，并且会同时移除
+ * 当出发内存警告时，因为弱映射表对图片实例并不是强持有，即使内存缓存本身被释放，一些被UIImageViews或其它存活实例强持有的图片热仍然可以再次被恢复从而避免从磁盘或者网络重新查询。这是有用的对下面这种情况：应用程序进入后台被清理缓存，再回到前台导致单元格图片闪烁
+ * 当该属性设置为YES，下次调用`sd_setImage`会同步将图片从弱映射表同步到强缓存中
+ * 5.12.0 版本之后该属性默认值为NO
  */
 @property (assign, nonatomic) BOOL shouldUseWeakMemoryCache;
 
